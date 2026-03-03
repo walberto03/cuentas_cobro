@@ -28,6 +28,13 @@
             -webkit-appearance: none;
             margin: 0;
         }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body class="bg-slate-100">
@@ -36,7 +43,6 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Lista de meses global
         const months = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
 
         const Icon = ({ name }) => {
@@ -52,17 +58,15 @@
         };
 
         const App = () => {
-            // Datos por defecto (Placeholders para seguridad)
             const defaultLocales = [
                 { id: 1, label: "Local 1", tenant: "", tenantId: "", coTenant: "", coTenantId: "", rent: 0, concept: "inmueble comercial", city: "" },
                 { id: 2, label: "Local 2", tenant: "", tenantId: "", coTenant: "", coTenantId: "", rent: 0, concept: "inmueble comercial", city: "" },
                 { id: 3, label: "Local 3", tenant: "", tenantId: "", coTenant: "", coTenantId: "", rent: 0, concept: "inmueble comercial", city: "" },
             ];
 
-            // Cargar datos del Arrendador desde LocalStorage
             const [ownerData, setOwnerData] = useState(() => {
                 const saved = localStorage.getItem('invoice_owner_settings');
-                return saved ? JSON.parse(saved) : { name: "NOMBRE ARRENDADOR", id: "00.000.000 de CIUDAD", bank: "BANCO - CUENTA" };
+                return saved ? JSON.parse(saved) : { name: "NOMBRE ARRENDADOR 1", id: "00.000.000 de CIUDAD", name2: "", id2: "", bank: "BANCO - CUENTA" };
             });
 
             const [locales, setLocales] = useState(() => {
@@ -71,7 +75,9 @@
             });
 
             const [signature, setSignature] = useState(() => localStorage.getItem('invoice_signature_img') || null);
+            const [signature2, setSignature2] = useState(() => localStorage.getItem('invoice_signature2_img') || null);
             const [sigScale, setSigScale] = useState(() => parseInt(localStorage.getItem('invoice_sig_scale')) || 180);
+            const [sigScale2, setSigScale2] = useState(() => parseInt(localStorage.getItem('invoice_sig_scale2')) || 180);
             const [activeIndex, setActiveIndex] = useState(0);
             const [currentDate, setCurrentDate] = useState({
                 day: new Date().getDate(),
@@ -83,10 +89,15 @@
             useEffect(() => { localStorage.setItem('invoice_owner_settings', JSON.stringify(ownerData)); }, [ownerData]);
             useEffect(() => { localStorage.setItem('invoice_locales_data', JSON.stringify(locales)); }, [locales]);
             useEffect(() => { localStorage.setItem('invoice_sig_scale', sigScale.toString()); }, [sigScale]);
+            useEffect(() => { localStorage.setItem('invoice_sig_scale2', sigScale2.toString()); }, [sigScale2]);
             useEffect(() => { 
                 if (signature) localStorage.setItem('invoice_signature_img', signature); 
                 else localStorage.removeItem('invoice_signature_img');
             }, [signature]);
+            useEffect(() => { 
+                if (signature2) localStorage.setItem('invoice_signature2_img', signature2); 
+                else localStorage.removeItem('invoice_signature2_img');
+            }, [signature2]);
 
             const activeLocal = locales[activeIndex];
 
@@ -132,7 +143,7 @@
             const handleOwnerChange = (field, value) => setOwnerData({ ...ownerData, [field]: value });
 
             const exportData = () => {
-                const data = { locales, signature, sigScale, ownerData };
+                const data = { locales, signature, signature2, sigScale, sigScale2, ownerData };
                 const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
                 const link = document.createElement('a');
                 link.href = URL.createObjectURL(blob);
@@ -148,7 +159,9 @@
                         const data = JSON.parse(event.target.result);
                         if (data.locales) setLocales(data.locales);
                         if (data.signature) setSignature(data.signature);
+                        if (data.signature2) setSignature2(data.signature2);
                         if (data.sigScale) setSigScale(data.sigScale);
+                        if (data.sigScale2) setSigScale2(data.sigScale2);
                         if (data.ownerData) setOwnerData(data.ownerData);
                     };
                     reader.readAsText(file);
@@ -176,14 +189,25 @@
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Sección 1: Arrendador */}
-                            <div className="space-y-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+                            {/* Sección 1: Arrendadores */}
+                            <div className="space-y-4 bg-blue-50/50 p-4 rounded-2xl border border-blue-100 max-h-[400px] overflow-y-auto custom-scrollbar">
                                 <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-2">
-                                    <Icon name="settings" /> Configuración General
+                                    <Icon name="settings" /> Arrendadores
                                 </p>
-                                <input type="text" value={ownerData.name} onChange={(e) => handleOwnerChange('name', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="Nombre Arrendadora" />
-                                <input type="text" value={ownerData.id} onChange={(e) => handleOwnerChange('id', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="ID y Ciudad Arrendadora" />
-                                <input type="text" value={ownerData.bank} onChange={(e) => handleOwnerChange('bank', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="Banco y Cuenta" />
+                                <div className="space-y-2">
+                                    <p className="text-[9px] font-bold text-blue-300 uppercase">Arrendador 1</p>
+                                    <input type="text" value={ownerData.name} onChange={(e) => handleOwnerChange('name', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="Nombre completo" />
+                                    <input type="text" value={ownerData.id} onChange={(e) => handleOwnerChange('id', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="ID y Ciudad" />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-blue-100">
+                                    <p className="text-[9px] font-bold text-blue-300 uppercase">Arrendador 2 (Opcional)</p>
+                                    <input type="text" value={ownerData.name2 || ""} onChange={(e) => handleOwnerChange('name2', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="Nombre completo" />
+                                    <input type="text" value={ownerData.id2 || ""} onChange={(e) => handleOwnerChange('id2', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="ID y Ciudad" />
+                                </div>
+                                <div className="space-y-2 pt-2 border-t border-blue-100">
+                                    <p className="text-[9px] font-bold text-blue-300 uppercase">Cuenta Bancaria</p>
+                                    <input type="text" value={ownerData.bank} onChange={(e) => handleOwnerChange('bank', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-blue-200" placeholder="Banco y Cuenta" />
+                                </div>
                             </div>
 
                             {/* Sección 2: Local e Inquilino */}
@@ -195,30 +219,27 @@
                                         </button>
                                     ))}
                                 </div>
-                                <div className="space-y-2 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Arrendatario Principal</p>
-                                    <input type="text" value={activeLocal.tenant} onChange={(e) => handleUpdateLocal('tenant', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Nombre completo" />
-                                    <input type="text" value={activeLocal.tenantId} onChange={(e) => handleUpdateLocal('tenantId', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Cédula y Ciudad" />
-                                    
-                                    <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">Segundo Arrendatario (Opcional)</p>
-                                    <input type="text" value={activeLocal.coTenant || ""} onChange={(e) => handleUpdateLocal('coTenant', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Nombre completo" />
-                                    <input type="text" value={activeLocal.coTenantId || ""} onChange={(e) => handleUpdateLocal('coTenantId', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Cédula y Ciudad" />
-                                    
+                                <div className="space-y-2 max-h-[330px] overflow-y-auto pr-2 custom-scrollbar">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Arrendatarios</p>
+                                    <input type="text" value={activeLocal.tenant} onChange={(e) => handleUpdateLocal('tenant', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Nombre Principal" />
+                                    <input type="text" value={activeLocal.tenantId} onChange={(e) => handleUpdateLocal('tenantId', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="CC Principal" />
+                                    <input type="text" value={activeLocal.coTenant || ""} onChange={(e) => handleUpdateLocal('coTenant', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Nombre Segundo (Opc)" />
+                                    <input type="text" value={activeLocal.coTenantId || ""} onChange={(e) => handleUpdateLocal('coTenantId', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="CC Segundo (Opc)" />
                                     <div className="flex gap-2 mt-2">
                                         <div className="flex-1">
                                             <p className="text-[9px] font-bold text-slate-400 uppercase">Canon</p>
                                             <input type="number" value={activeLocal.rent} onChange={(e) => handleUpdateLocal('rent', parseInt(e.target.value) || 0)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200 font-bold text-blue-600" />
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Ciudad Cobro</p>
+                                            <p className="text-[9px] font-bold text-slate-400 uppercase">Ciudad</p>
                                             <input type="text" value={activeLocal.city} onChange={(e) => handleUpdateLocal('city', e.target.value)} className="w-full p-2.5 text-sm rounded-xl border border-slate-200" placeholder="Ej: Valledupar" />
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Sección 3: Firma y Fecha */}
-                            <div className="space-y-4">
+                            {/* Sección 3: Firmas y Fecha */}
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 <div className="grid grid-cols-3 gap-1">
                                     <input type="number" value={currentDate.day} onChange={(e) => setCurrentDate({...currentDate, day: e.target.value})} className="p-2 border rounded-lg text-center text-sm font-bold" />
                                     <select value={currentDate.month} onChange={(e) => setCurrentDate({...currentDate, month: e.target.value})} className="p-2 border rounded-lg text-[10px] font-bold">
@@ -226,18 +247,41 @@
                                     </select>
                                     <input type="number" value={currentDate.year} onChange={(e) => setCurrentDate({...currentDate, year: e.target.value})} className="p-2 border rounded-lg text-center text-sm font-bold" />
                                 </div>
-                                <label className="flex items-center justify-center gap-2 w-full p-2 bg-slate-100 text-slate-600 rounded-xl border-2 border-dashed border-slate-300 cursor-pointer text-xs font-bold">
-                                    <Icon name="image" /> {signature ? 'CAMBIAR FIRMA' : 'SUBIR FIRMA'}
-                                    <input type="file" accept="image/*" onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => setSignature(reader.result);
-                                            reader.readAsDataURL(file);
-                                        }
-                                    }} className="hidden" />
-                                </label>
-                                {signature && <input type="range" min="50" max="400" value={sigScale} onChange={(e) => setSigScale(e.target.value)} className="w-full h-1 accent-blue-600 cursor-pointer" />}
+                                
+                                {/* Firma 1 */}
+                                <div className="space-y-2 bg-slate-50 p-3 rounded-xl">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Firma Arrendador 1</p>
+                                    <label className="flex items-center justify-center gap-2 w-full p-2 bg-white text-slate-600 rounded-xl border-2 border-dashed border-slate-300 cursor-pointer text-xs font-bold">
+                                        <Icon name="image" /> {signature ? 'CAMBIAR' : 'SUBIR'}
+                                        <input type="file" accept="image/*" onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => setSignature(reader.result);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} className="hidden" />
+                                    </label>
+                                    {signature && <input type="range" min="50" max="300" value={sigScale} onChange={(e) => setSigScale(e.target.value)} className="w-full h-1 accent-blue-600 cursor-pointer" />}
+                                </div>
+
+                                {/* Firma 2 */}
+                                <div className="space-y-2 bg-slate-50 p-3 rounded-xl">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase">Firma Arrendador 2</p>
+                                    <label className="flex items-center justify-center gap-2 w-full p-2 bg-white text-slate-600 rounded-xl border-2 border-dashed border-slate-300 cursor-pointer text-xs font-bold">
+                                        <Icon name="image" /> {signature2 ? 'CAMBIAR' : 'SUBIR'}
+                                        <input type="file" accept="image/*" onChange={(e) => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const reader = new FileReader();
+                                                reader.onloadend = () => setSignature2(reader.result);
+                                                reader.readAsDataURL(file);
+                                            }
+                                        }} className="hidden" />
+                                    </label>
+                                    {signature2 && <input type="range" min="50" max="300" value={sigScale2} onChange={(e) => setSigScale2(e.target.value)} className="w-full h-1 accent-blue-600 cursor-pointer" />}
+                                </div>
+
                                 <button onClick={() => window.print()} className="w-full py-3 bg-slate-800 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-colors">
                                     <Icon name="printer" /> IMPRIMIR PDF
                                 </button>
@@ -247,14 +291,13 @@
 
                     {/* HOJA TAMAÑO CARTA (LETTER) */}
                     <div id="document-paper" className="w-[21.59cm] min-h-[27.94cm] bg-white shadow-2xl p-[2cm] flex flex-col items-center text-slate-900 print:shadow-none print:m-0 print:w-full overflow-hidden">
-                        <div className="text-center mb-10 w-full">
-                            <h2 className="text-lg font-bold mb-10 tracking-[0.2em] border-b-2 border-slate-100 pb-4">CUENTA DE COBRO</h2>
-                            <div className="font-bold space-y-4 mb-8">
+                        <div className="text-center mb-8 w-full">
+                            <h2 className="text-lg font-bold mb-8 tracking-[0.2em] border-b-2 border-slate-100 pb-4">CUENTA DE COBRO</h2>
+                            <div className="font-bold space-y-3 mb-6">
                                 <div className="space-y-1">
                                     <p className="uppercase text-lg leading-tight">{activeLocal.tenant || "NOMBRE ARRENDATARIO"}</p>
                                     <p className="text-sm font-normal text-slate-500 italic">CC. {activeLocal.tenantId || "0.000.000"}</p>
                                 </div>
-                                
                                 {activeLocal.coTenant && (
                                     <div className="space-y-1 border-t border-slate-50 pt-2">
                                         <p className="uppercase text-lg leading-tight">{activeLocal.coTenant}</p>
@@ -264,12 +307,20 @@
                             </div>
                         </div>
 
-                        <div className="w-full space-y-8 flex-grow">
+                        <div className="w-full space-y-6 flex-grow">
                             <div className="text-center space-y-3">
                                 <p className="font-bold text-[10px] text-slate-400 uppercase tracking-widest">Debe a:</p>
-                                <div>
-                                    <p className="uppercase text-xl font-bold leading-tight">{ownerData.name}</p>
-                                    <p className="text-sm text-slate-600">C.C. {ownerData.id}</p>
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="uppercase text-lg font-bold leading-tight">{ownerData.name}</p>
+                                        <p className="text-sm text-slate-600">C.C. {ownerData.id}</p>
+                                    </div>
+                                    {ownerData.name2 && (
+                                        <div>
+                                            <p className="uppercase text-lg font-bold leading-tight">{ownerData.name2}</p>
+                                            <p className="text-sm text-slate-600">C.C. {ownerData.id2}</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -286,24 +337,40 @@
                                 <p>Pago de servicio de arriendo correspondiente al periodo de <span className="font-bold">{currentDate.month}</span> del <span className="font-bold">{currentDate.year}</span> de acuerdo con el contrato de arrendamiento para <span className="underline decoration-slate-300">{activeLocal.concept}</span> firmado entre las partes.</p>
                             </div>
 
-                            <div className="px-8 mt-6">
+                            <div className="px-8 mt-4">
                                 <p className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-slate-800 text-center">Por favor consignar en la <span className="font-bold">{ownerData.bank}</span> a mi nombre.</p>
                             </div>
 
-                            <div className="mt-8 text-sm px-8 font-bold text-slate-400 uppercase tracking-widest">
+                            <div className="mt-6 text-sm px-8 font-bold text-slate-400 uppercase tracking-widest">
                                 <p>{activeLocal.city || "Ciudad"}, {currentDate.day} de {currentDate.month} del {currentDate.year}</p>
                             </div>
                         </div>
 
-                        {/* Firma */}
-                        <div className="mt-10 flex flex-col items-center">
-                            <div className="h-28 flex items-end justify-center mb-2 overflow-hidden">
-                                {signature ? <img src={signature} style={{ width: `${sigScale}px` }} className="max-h-28 object-contain mix-blend-multiply" /> : <div className="text-slate-200 border border-dashed border-slate-200 p-4 rounded text-[10px] uppercase">Sin Firma</div>}
+                        {/* Firmas lado a lado */}
+                        <div className={`mt-10 flex w-full justify-center ${signature2 ? 'gap-12' : ''}`}>
+                            {/* Firma 1 */}
+                            <div className="flex flex-col items-center flex-1 max-w-[40%]">
+                                <div className="h-28 flex items-end justify-center mb-2 overflow-hidden">
+                                    {signature ? <img src={signature} style={{ width: `${sigScale}px` }} className="max-h-28 object-contain mix-blend-multiply" /> : <div className="text-slate-100 border border-dashed border-slate-100 p-4 rounded text-[8px] uppercase">Firma 1</div>}
+                                </div>
+                                <div className="border-t-2 border-slate-800 w-full pt-3 text-center">
+                                    <p className="font-bold uppercase text-[12px] tracking-tighter leading-none mb-1">{ownerData.name}</p>
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase">C.C. {ownerData.id}</p>
+                                </div>
                             </div>
-                            <div className="border-t-2 border-slate-800 w-80 pt-4 text-center">
-                                <p className="font-bold uppercase tracking-tighter leading-none mb-1">{ownerData.name}</p>
-                                <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">C.C. {ownerData.id}</p>
-                            </div>
+
+                            {/* Firma 2 (Opcional) */}
+                            {ownerData.name2 && (
+                                <div className="flex flex-col items-center flex-1 max-w-[40%]">
+                                    <div className="h-28 flex items-end justify-center mb-2 overflow-hidden">
+                                        {signature2 ? <img src={signature2} style={{ width: `${sigScale2}px` }} className="max-h-28 object-contain mix-blend-multiply" /> : <div className="text-slate-100 border border-dashed border-slate-100 p-4 rounded text-[8px] uppercase">Firma 2</div>}
+                                    </div>
+                                    <div className="border-t-2 border-slate-800 w-full pt-3 text-center">
+                                        <p className="font-bold uppercase text-[12px] tracking-tighter leading-none mb-1">{ownerData.name2}</p>
+                                        <p className="text-[9px] text-slate-500 font-bold uppercase">C.C. {ownerData.id2}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
